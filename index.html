@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>paraClaudia — Larry la Rana</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============ HOME ============ -->
+<section id="screen-home" class="screen active">
+	<button id="lang-toggle" class="corner-btn" title="Idioma / Language">🌐 ES</button>
+
+	<div id="larry-wrap">
+		<div id="bubble" class="bubble hidden"></div>
+		<svg id="larry" viewBox="0 0 240 220" aria-label="Larry la rana">
+			<!-- back legs -->
+			<ellipse cx="45"  cy="185" rx="34" ry="20" fill="#4a9e3f"/>
+			<ellipse cx="195" cy="185" rx="34" ry="20" fill="#4a9e3f"/>
+			<!-- body -->
+			<ellipse cx="120" cy="140" rx="85" ry="68" fill="#5cb84f"/>
+			<!-- belly -->
+			<ellipse cx="120" cy="158" rx="55" ry="42" fill="#c8e6a0"/>
+			<!-- eyes -->
+			<circle cx="78"  cy="66" r="30" fill="#5cb84f"/>
+			<circle cx="162" cy="66" r="30" fill="#5cb84f"/>
+			<circle cx="78"  cy="62" r="20" fill="#fff"/>
+			<circle cx="162" cy="62" r="20" fill="#fff"/>
+			<circle class="pupil" cx="82"  cy="66" r="9" fill="#233"/>
+			<circle class="pupil" cx="158" cy="66" r="9" fill="#233"/>
+			<circle cx="85"  cy="62" r="3.5" fill="#fff"/>
+			<circle cx="161" cy="62" r="3.5" fill="#fff"/>
+			<!-- cheeks -->
+			<circle cx="58"  cy="118" r="11" fill="#f4a7b0" opacity="0.75"/>
+			<circle cx="182" cy="118" r="11" fill="#f4a7b0" opacity="0.75"/>
+			<!-- mouth: closed smile / open oval (toggled while talking) -->
+			<path id="mouth-closed" d="M70 118 Q120 152 170 118" stroke="#2c5e24" stroke-width="7" fill="none" stroke-linecap="round"/>
+			<ellipse id="mouth-open" cx="120" cy="128" rx="30" ry="20" fill="#a33d3d" style="display:none"/>
+			<ellipse id="tongue" cx="120" cy="138" rx="16" ry="8" fill="#e57373" style="display:none"/>
+			<!-- front feet -->
+			<ellipse cx="82"  cy="202" rx="24" ry="12" fill="#4a9e3f"/>
+			<ellipse cx="158" cy="202" rx="24" ry="12" fill="#4a9e3f"/>
+		</svg>
+	</div>
+
+	<h1 id="home-title">¡Hola Claudia!</h1>
+
+	<div class="menu">
+		<button id="btn-piano" class="big-btn menu-btn piano-btn">
+			<span class="btn-emoji">🎹</span><span id="menu-piano-label">Piano</span>
+		</button>
+		<button id="btn-colors" class="big-btn menu-btn colors-btn">
+			<span class="btn-emoji">🎨</span><span id="menu-colors-label">Colores</span>
+		</button>
+	</div>
+</section>
+
+<!-- ============ PIANO ============ -->
+<section id="screen-piano" class="screen">
+	<div class="topbar">
+		<button class="corner-btn back-btn" data-back>⬅️</button>
+		<div id="song-title" class="screen-title">🎂 Cumpleaños Feliz</div>
+		<button id="piano-hear" class="corner-btn" title="Escuchar">🔊</button>
+	</div>
+	<div id="song-progress"><div id="song-progress-fill"></div></div>
+	<div id="piano-keys"></div>
+</section>
+
+<!-- ============ COLORS ============ -->
+<section id="screen-colors" class="screen">
+	<div class="topbar">
+		<button class="corner-btn back-btn" data-back>⬅️</button>
+		<div id="color-prompt" class="screen-title">¿Dónde está…?</div>
+		<button id="color-repeat" class="corner-btn" title="Repetir">🔊</button>
+	</div>
+	<div id="color-buttons"></div>
+</section>
+
+<div id="confetti-layer"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
