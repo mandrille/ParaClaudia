@@ -22,7 +22,11 @@ const T = {
 		greet: '¡Hola Claudia! Soy Larry la rana. ¿Jugamos?',
 		pianoIntro: '¡Vamos a tocar Cumpleaños Feliz! Toca la tecla que brilla.',
 		pianoDone: '¡Cumpleaños feliz! ¡Lo hiciste muy bien, Claudia!',
+		freeIntro: '¡Toca lo que quieras!',
+		modeFollow: 'Sígueme',
+		modeFree: 'Libre',
 		listen: '¡Escucha!',
+		no: '¡No!',
 		colorNames: { red: 'rojo', yellow: 'amarillo', blue: 'azul' },
 		colorAsk: (c) => `¿Dónde está el ${c}? ¡Toca el ${c}!`,
 		colorPromptLabel: (c) => `¿Dónde está el ${c.toUpperCase()}?`,
@@ -38,7 +42,11 @@ const T = {
 		greet: "Hi Claudia! I'm Larry the frog. Let's play!",
 		pianoIntro: "Let's play Happy Birthday! Touch the key that glows.",
 		pianoDone: 'Happy birthday! You did great, Claudia!',
+		freeIntro: 'Play anything you like!',
+		modeFollow: 'Follow me',
+		modeFree: 'Free play',
 		listen: 'Listen!',
+		no: 'No!',
 		colorNames: { red: 'red', yellow: 'yellow', blue: 'blue' },
 		colorAsk: (c) => `Where is ${c}? Touch ${c}!`,
 		colorPromptLabel: (c) => `Where is ${c.toUpperCase()}?`,
@@ -92,12 +100,29 @@ function showBubble(text) {
 	bubbleTimer = setTimeout(() => b.classList.add('hidden'), 4000);
 }
 
+// Mientras Larry habla los juegos bloquean la entrada (para que Claudia
+// escuche la consigna entera). El watchdog garantiza el desbloqueo aunque
+// el navegador nunca dispare onend (voces ausentes, iOS caprichoso...).
+let larrySpeaking = false;
+let sayToken = 0;
+
 function say(text, onend) {
 	showBubble(text);
-	if (!('speechSynthesis' in window)) { if (onend) onend(); return; }
+	const token = ++sayToken;
+	larrySpeaking = true;
+	let done = false;
+	const finish = () => {
+		if (done) return;
+		done = true;
+		if (token === sayToken) { larrySpeaking = false; larryTalk(false); }
+		if (onend) onend();
+	};
+	setTimeout(finish, Math.min(9000, 1200 + text.length * 95));
+	if (!('speechSynthesis' in window)) return;
 	speechSynthesis.cancel();
 	// pequeño retraso: algunos Android se tragan el speak() justo tras cancel()
 	setTimeout(() => {
+		if (token !== sayToken) return;
 		const u = new SpeechSynthesisUtterance(text);
 		const wantLang = state.lang === 'es' ? 'es' : 'en';
 		u.lang = state.lang === 'es' ? 'es-ES' : 'en-US';
@@ -105,9 +130,9 @@ function say(text, onend) {
 		if (voice) u.voice = voice;
 		u.rate = 0.85;   // despacio, para una niña de 2 años
 		u.pitch = 1.25;  // voz aguda de rana simpática
-		u.onstart = () => larryTalk(true);
-		u.onend = () => { larryTalk(false); if (onend) onend(); };
-		u.onerror = () => { larryTalk(false); if (onend) onend(); };
+		u.onstart = () => { if (token === sayToken) larryTalk(true); };
+		u.onend = finish;
+		u.onerror = finish;
 		speechSynthesis.speak(u);
 	}, 60);
 }
@@ -183,6 +208,7 @@ const SONG_DUR = [
 ];
 
 let songStep = 0;
+let pianoMode = 'follow';  // 'follow' (sígueme) | 'free' (libre)
 let pianoLocked = false;   // durante la demo o la celebración
 let demoTimers = [];
 
@@ -206,9 +232,14 @@ function buildPiano() {
 	});
 }
 
-function glowKey(idx) {
-	document.querySelectorAll('.piano-key').forEach(b =>
-		b.classList.toggle('glow', Number(b.dataset.idx) === idx));
+// resalta la tecla objetivo y (en modo sígueme) apaga las demás
+function updateKeys(targetIdx) {
+	document.querySelectorAll('.piano-key').forEach(b => {
+		const idx = Number(b.dataset.idx);
+		b.classList.toggle('glow', idx === targetIdx);
+		b.classList.toggle('dimmed',
+			pianoMode === 'follow' && targetIdx >= 0 && idx !== targetIdx);
+	});
 }
 
 function setProgress() {
@@ -217,25 +248,35 @@ function setProgress() {
 }
 
 function pressPianoKey(idx, btn) {
+	if (pianoLocked) return;
+	if (pianoMode === 'free') {
+		// modo libre: todas las teclas suenan, sin guía
+		tone(KEY_DEFS[idx].freq);
+		btn.classList.add('pressed');
+		setTimeout(() => btn.classList.remove('pressed'), 160);
+		return;
+	}
+	// modo sígueme: las teclas apagadas están MUDAS, solo la que brilla suena
+	if (idx !== SONG[songStep]) {
+		btn.classList.add('pressed');
+		setTimeout(() => btn.classList.remove('pressed'), 160);
+		return;
+	}
 	tone(KEY_DEFS[idx].freq);
 	btn.classList.add('pressed');
 	setTimeout(() => btn.classList.remove('pressed'), 160);
-	if (pianoLocked) return;
-	if (idx === SONG[songStep]) {
-		songStep++;
-		setProgress();
-		if (songStep >= SONG.length) {
-			finishSong();
-		} else {
-			glowKey(SONG[songStep]);
-		}
+	songStep++;
+	setProgress();
+	if (songStep >= SONG.length) {
+		finishSong();
+	} else {
+		updateKeys(SONG[songStep]);
 	}
-	// tecla equivocada: no pasa nada malo, la correcta sigue brillando
 }
 
 function finishSong() {
 	pianoLocked = true;
-	glowKey(-1);
+	updateKeys(-1);
 	confetti(90);
 	fanfare();
 	setTimeout(() => {
@@ -249,7 +290,23 @@ function startSong() {
 	songStep = 0;
 	pianoLocked = false;
 	setProgress();
-	glowKey(SONG[0]);
+	updateKeys(SONG[0]);
+}
+
+function setPianoMode(mode, announce) {
+	pianoMode = mode;
+	stopPianoDemo();
+	document.getElementById('mode-follow').classList.toggle('active', mode === 'follow');
+	document.getElementById('mode-free').classList.toggle('active', mode === 'free');
+	document.getElementById('song-progress').classList.toggle('hidden', mode === 'free');
+	if (mode === 'follow') {
+		startSong();
+		if (announce) say(tr().pianoIntro);
+	} else {
+		pianoLocked = false;
+		updateKeys(-1);
+		if (announce) say(tr().freeIntro);
+	}
 }
 
 function playDemo() {
@@ -260,11 +317,18 @@ function playDemo() {
 	SONG.forEach((idx, i) => {
 		demoTimers.push(setTimeout(() => {
 			tone(KEY_DEFS[idx].freq, SONG_DUR[i] + 0.15);
-			glowKey(idx);
+			updateKeys(idx);
 		}, t));
 		t += SONG_DUR[i] * 1000;
 	});
-	demoTimers.push(setTimeout(startSong, t + 300));
+	demoTimers.push(setTimeout(() => {
+		if (pianoMode === 'follow') {
+			startSong();
+		} else {
+			pianoLocked = false;
+			updateKeys(-1);
+		}
+	}, t + 300));
 }
 
 function stopPianoDemo() {
@@ -275,8 +339,7 @@ function stopPianoDemo() {
 function openPiano() {
 	showScreen('screen-piano');
 	buildPiano();
-	startSong();
-	say(tr().pianoIntro);
+	setPianoMode('follow', true);
 }
 
 // ------------------------------------------------------------
@@ -291,6 +354,7 @@ const COLOR_DEFS = [
 let colorTarget = null;
 let colorLocked = false;
 let colorNextTimer = null;
+let explainedWrong = new Set();  // colores fallados ya explicados esta ronda
 
 function shuffled(arr) {
 	const a = arr.slice();
@@ -303,6 +367,7 @@ function shuffled(arr) {
 
 function colorRound() {
 	colorLocked = false;
+	explainedWrong = new Set();
 	// color nuevo distinto al anterior
 	const options = COLOR_DEFS.filter(c => c.id !== (colorTarget && colorTarget.id));
 	colorTarget = options[Math.floor(Math.random() * options.length)];
@@ -325,7 +390,8 @@ function colorRound() {
 }
 
 function pressColor(c, btn) {
-	if (colorLocked) return;
+	// nada de pulsar mientras Larry habla: que escuche la consigna entera
+	if (colorLocked || larrySpeaking) return;
 	if (c.id === colorTarget.id) {
 		colorLocked = true;
 		btn.classList.add('correct');
@@ -339,7 +405,13 @@ function pressColor(c, btn) {
 		btn.classList.add('wrong');
 		setTimeout(() => btn.classList.remove('wrong'), 550);
 		boingSound();
-		say(tr().colorWrong(tr().colorNames[c.id], tr().colorNames[colorTarget.id]));
+		if (explainedWrong.has(c.id)) {
+			// ya se lo explicamos: insistir solo merece un NO cortito
+			say(tr().no);
+		} else {
+			explainedWrong.add(c.id);
+			say(tr().colorWrong(tr().colorNames[c.id], tr().colorNames[colorTarget.id]));
+		}
 	}
 }
 
@@ -351,7 +423,8 @@ function openColors() {
 }
 
 function repeatColorPrompt() {
-	if (colorTarget) say(tr().colorAsk(tr().colorNames[colorTarget.id]));
+	if (colorTarget && !larrySpeaking && !colorLocked)
+		say(tr().colorAsk(tr().colorNames[colorTarget.id]));
 }
 
 // ------------------------------------------------------------
@@ -381,6 +454,8 @@ function applyLabels() {
 	document.getElementById('menu-piano-label').textContent = tr().menuPiano;
 	document.getElementById('menu-colors-label').textContent = tr().menuColors;
 	document.getElementById('song-title').textContent = tr().songTitle;
+	document.getElementById('mode-follow-label').textContent = tr().modeFollow;
+	document.getElementById('mode-free-label').textContent = tr().modeFree;
 	document.getElementById('lang-toggle').textContent = state.lang === 'es' ? '🌐 ES' : '🌐 EN';
 	document.documentElement.lang = state.lang;
 }
@@ -395,6 +470,8 @@ function toggleLang() {
 document.getElementById('btn-piano').addEventListener('pointerdown', () => { audioCtx(); openPiano(); });
 document.getElementById('btn-colors').addEventListener('pointerdown', () => { audioCtx(); openColors(); });
 document.getElementById('piano-hear').addEventListener('pointerdown', () => { audioCtx(); playDemo(); });
+document.getElementById('mode-follow').addEventListener('pointerdown', () => setPianoMode('follow', true));
+document.getElementById('mode-free').addEventListener('pointerdown', () => setPianoMode('free', true));
 document.getElementById('color-repeat').addEventListener('pointerdown', repeatColorPrompt);
 document.getElementById('lang-toggle').addEventListener('pointerdown', toggleLang);
 document.getElementById('larry').addEventListener('pointerdown', () => { audioCtx(); say(tr().greet); });
@@ -403,3 +480,10 @@ document.querySelectorAll('[data-back]').forEach(b =>
 
 applyLabels();
 showBubble(state.lang === 'es' ? '¡Tócame!' : 'Tap me!');
+
+// gancho de solo lectura para las pruebas automatizadas
+window.pcDebug = {
+	get speaking() { return larrySpeaking; },
+	get songStep() { return songStep; },
+	get pianoMode() { return pianoMode; },
+};

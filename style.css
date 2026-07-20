@@ -164,6 +164,29 @@ button {
 
 /* ---------- piano ---------- */
 
+#piano-modes {
+	display: flex;
+	gap: 12px;
+	margin-top: 8px;
+}
+.mode-btn {
+	min-height: 60px;
+	padding: 0 24px;
+	border-radius: 20px;
+	background: rgba(255,255,255,0.7);
+	box-shadow: 0 4px 0 rgba(0,0,0,0.12);
+	font-size: clamp(18px, 3.6vw, 28px);
+	font-weight: bold;
+	color: #789;
+}
+.mode-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,0.12); }
+.mode-btn.active {
+	background: linear-gradient(180deg, #ffd54f, #ffb300);
+	color: #5d4000;
+}
+
+#song-progress.hidden { visibility: hidden; }
+
 #song-progress {
 	width: 100%;
 	max-width: 900px;
@@ -224,6 +247,11 @@ button {
 	font-size: clamp(16px, 3.4vw, 28px);
 	font-weight: bold;
 	color: #445;
+}
+
+/* follow mode: everything except the target key is grey, dark and muted */
+.piano-key.dimmed {
+	filter: grayscale(0.85) brightness(0.72);
 }
 
 .piano-key.glow {

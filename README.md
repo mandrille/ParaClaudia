@@ -13,16 +13,20 @@ Toca a Larry y te saluda.
 
 ## Juegos
 
-1. **🎹 Piano — Cumpleaños Feliz**: 8 teclas de colores (Sol–Sol). La
-   tecla que toca a continuación brilla; al pulsarla suena la nota (Web
-   Audio) y avanza la barra de progreso. Al terminar la canción: confeti,
-   fanfarria y felicitación de Larry. El botón `🔊` reproduce la canción
-   entera con las teclas iluminándose (demo). Pulsar una tecla equivocada
-   solo suena, nunca castiga.
+1. **🎹 Piano — Cumpleaños Feliz**, con dos modos:
+   - **⭐ Sígueme** (por defecto): solo la tecla correcta de la canción
+     brilla y suena; las demás quedan grises, oscuras y MUDAS. Barra de
+     progreso, y al terminar: confeti, fanfarria y felicitación de Larry.
+   - **🎈 Libre**: las 8 teclas suenan sin guía, para experimentar.
+   El botón `🔊` reproduce la canción entera con las teclas
+   iluminándose (demo).
 2. **🎨 Adivina el color**: rojo, amarillo y azul. Larry dice el color en
-   voz alta y Claudia toca el botón. Acierto → confeti y elogio; fallo →
-   Larry nombra el color tocado y repite cuál buscar. Los botones cambian
-   de posición en cada ronda. `🔊` repite la pregunta.
+   voz alta y Claudia toca el botón. **Mientras Larry habla los botones no
+   responden** (así escucha la consigna entera sin interrumpirla).
+   Acierto → confeti y elogio. Primer fallo con un color → Larry lo nombra
+   y repite cuál buscar; insistir con el mismo color equivocado → solo
+   «¡No!». Los botones cambian de posición en cada ronda. `🔊` repite la
+   pregunta.
 
 ## Cómo usarla
 
